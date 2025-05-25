@@ -1,15 +1,17 @@
 <div class="notebook">
 
-<div class="nb-cell program" data-background="true" name="p2">
-:-include("my_lib.pl").
+<div class="nb-cell program" data-background="true" data-below="true" name="p2">
+%%my library.
+writex(X):-write(X).
 </div>
 
-<div class="nb-cell program" data-background="true" data-below="true" data-singleline="true" name="p1">
+<div class="nb-cell program" data-background="true" data-below="true" name="p1">
+%https://swish.swi-prolog.org/?code=https://raw.githubusercontent.com/gbmele/MH_ROSTERON/refs/heads/main/fact_base.swinb
 %well it looks like you worked it out.
 % can download factbases or data......
 </div>
 
-<div class="nb-cell program" data-singleline="true" name="p1">
+<div class="nb-cell program" data-background="true" data-below="true" data-singleline="true" name="p1">
 %%fact base
 a(1).
 a(2).
@@ -19,7 +21,7 @@ b(2).
 </div>
 
 <div class="nb-cell query" data-tabled="true" name="q1">
-findall(Z,a(Z),ZZ).
+findall(Z,a(Z),ZZ),writex(33).
 </div>
 
 </div>
