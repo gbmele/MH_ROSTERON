@@ -1,14 +1,11 @@
 <div class="notebook">
 
-<div class="nb-cell program" data-background="true" data-below="true" name="p2">
-%%my library.
-writex(X):-write(X).
-</div>
-
-<div class="nb-cell program" data-background="true" data-below="true" name="p1">
+<div class="nb-cell program" data-background="true" data-below="true" data-singleline="true" name="p1">
 %https://swish.swi-prolog.org/?code=https://raw.githubusercontent.com/gbmele/MH_ROSTERON/refs/heads/main/fact_base.swinb
 %well it looks like you worked it out.
 % can download factbases or data......
+
+
 </div>
 
 <div class="nb-cell program" data-background="true" data-below="true" data-singleline="true" name="p1">
@@ -21,8 +18,89 @@ b(2).
 b(33).
 </div>
 
+<div class="nb-cell program" data-background="true" name="p5">
+%%test_roster
+test_roster([[gm,a,ap],[db,p,o]]).
+</div>
+
 <div class="nb-cell query" data-tabled="true" name="q1">
-findall(Z,a(Z),ZZ),writex(33).
+test_roster(R),lines_to_roster(R,RR),roster_to_minizinc(RR,RRR),
+flatten(RRR,R4),maplist(writeln,R4).
+</div>
+
+<div class="nb-cell program" data-background="true" data-singleline="true" name="p3">
+%%my lib
+writex(X):-write(X).
+
+
+
+
+</div>
+
+<div class="nb-cell html" name="htm1">
+
+</div>
+
+<div class="nb-cell program" data-background="true" data-singleline="true" name="p4">
+%lines_to_roster([[gm,a,b],[db,p,o]],R)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+lines_to_roster(R,RR):-
+    process_lines(R,RR).
+
+process_lines([],[]).
+process_lines([[DOC|SHIFTS]|RESTROSTER],[R|RESULT]):-
+    process_line([DOC|SHIFTS],R),
+    process_lines(RESTROSTER,RESULT).
+
+process_line([DOC | SHIFTS], R4) :-
+    length(SHIFTS, N),
+    numlist(1, N, DAYS),
+    maplist(create_roster_item(DOC), DAYS, SHIFTS, R4).
+
+create_roster_item(DOC, DAY, SHIFT, roster(DOC, DAY, SHIFT)).
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+</div>
+
+<div class="nb-cell program" data-background="true" name="p2">
+%%roster_to_minizinc
+roster_to_minizinc(LIST_OF_ROSTER_ITEMS,RESULT):-
+    maplist(roster_to_minizinc,LIST_OF_ROSTER_ITEMS,RESULT).
+
+roster_to_minizinc(roster(DOC,DAY,SHIFT),MINIZINC):-
+ (switch_shifts(DOC,DAY,SHIFT,MINIZINC)-&gt;true ; 
+ 										(   writeln("failed shifts"),
+     										write(DOC),
+     										write(DAY),write(SHIFT))).
+
+
+switch_shifts(DOC,DAY,SHIFT,RESULT):-
+    valid_shift(SHIFT),
+    upcase_atom(DOC,UPDOC),
+    format(atom(RESULT),"constraint roster[~w,~w] = ~w;\n",[UPDOC,DAY,SHIFT]).
+
+switch_shifts(DOC,DAY,SHIFT,RESULT):-
+    string_chars(SHIFT,['x',S1]),
+    upcase_atom(DOC,UPDOC),
+    format(atom(RESULT),"constraint roster[~w,~w] != ~w;\n",[UPDOC,DAY,S1]).
+
+switch_shifts(DOC,DAY,SHIFT,RESULT):-
+    string_chars(SHIFT,[S1,S2]),
+    upcase_atom(DOC,UPDOC),
+    format(atom(RESULT),"constraint roster[~w,~w] = ~w \\/ roster[~w,~w] = ~w;\n",[UPDOC,DAY,S1,UPDOC,DAY,S2]).
+
+
+valid_shift(a).
+valid_shift(p).
+valid_shift(l).
+valid_shift(c).
+valid_shift(s).
+valid_shift(o).
+valid_shift(i).
+valid_shift(lsl).
+valid_shift(cl).
+
 </div>
 
 </div>
