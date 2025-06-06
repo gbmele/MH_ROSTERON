@@ -1,15 +1,28 @@
 <div class="notebook">
 
-<div class="nb-cell program" data-background="true" data-below="true" data-singleline="true" name="p1">
+<div class="nb-cell program" data-background="true" data-singleline="true" name="p1">
 %https://swish.swi-prolog.org/?code=https://raw.githubusercontent.com/gbmele/MH_ROSTERON/refs/heads/main/fact_base.swinb
-%well it looks like you worked it out.
-% can download factbases or data......
 
-
+%%:-include("my_lib.pl").
 </div>
 
-<div class="nb-cell program" data-background="true" data-below="true" data-singleline="true" name="p1">
+<div class="nb-cell html" name="htm2">
+this is just a place to do notes...
+ROSTER_LINES == list of lists [[docA,shift,shift,shift],[docB,shift,shift,shift]]
+ROSTER_ITEMS == [roster[DOC,DAY,SHIFT],....].
+</div>
+
+<div class="nb-cell program" data-background="true" data-singleline="true" name="p1">
 %%fact base
+%%staff(DOC_NAME,EMPLOYEE_NUMBER,ROLE).
+
+staff(gm,1234,dkkdfkdf).
+staff(db,232323).
+staff_num(STAFF,EMP_NUM):-
+    staff(STAFF,EMP_NUM,_).
+staff_num(STAFF,NUM):-
+    staff(STAFF,NUM).
+
 a(1).
 a(2).
 a(3).
@@ -18,14 +31,53 @@ b(2).
 b(33).
 </div>
 
-<div class="nb-cell program" data-background="true" name="p5">
+<div class="nb-cell program" data-background="true" data-singleline="true" name="p5">
 %%test_roster
-test_roster([[gm,a,ap],[db,p,o]]).
+test_roster([[gm,a,o,i],[db,p,o,s]]).
+test_the_roster:-
+    test_roster(R),
+    roster_lines_to_roster(R,R2),
+    roster_to_minizinc(R2,R3),
+	flatten(R3,R4),
+    maplist(writeln,R4).
+
+test2:-
+    test_roster(R),
+    compose([roster_lines_to_roster,
+              roster_to_minizinc,
+              flatten],R,R2),
+    maplist(writeln,R2).
+
+compose([], X, X).
+compose([F|Fs], X, Y) :-
+    call(F, X, Z),
+    compose(Fs, Z, Y).
+
+compose([], X, X).
+compose([F|Fs],H, Y) :-
+    maplist(F, H, Z),
+    compose(Fs, Z, Y).
+
+c_writeln(R,R):-
+    maplist(writeln,R).
+
+add1(X,Y):-
+    maplist(add1,X,Y).
+add1(X,Y):-Y is X + 1.
+
+
+addx(X,Y,Z):-
+    maplist(addx(X),Y,Z).
+addx(X,Y,Z):- Z is X + Y.
+
+</div>
+
+<div class="nb-cell query" data-tabled="true" name="q2">
+
 </div>
 
 <div class="nb-cell query" data-tabled="true" name="q1">
-test_roster(R),lines_to_roster(R,RR),roster_to_minizinc(RR,RRR),
-flatten(RRR,R4),maplist(writeln,R4).
+test_the_roster.
 </div>
 
 <div class="nb-cell program" data-background="true" data-singleline="true" name="p3">
@@ -42,9 +94,9 @@ writex(X):-write(X).
 </div>
 
 <div class="nb-cell program" data-background="true" data-singleline="true" name="p4">
-%lines_to_roster([[gm,a,b],[db,p,o]],R)
+% roster_lines_to_roster([[gm,a,b],[db,p,o]],R)   --&gt; [[roster[gm,1,a],roster[gm,2,b]]...
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-lines_to_roster(R,RR):-
+roster_lines_to_roster(R,RR):-
     process_lines(R,RR).
 
 process_lines([],[]).
@@ -63,43 +115,71 @@ create_roster_item(DOC, DAY, SHIFT, roster(DOC, DAY, SHIFT)).
 
 </div>
 
-<div class="nb-cell program" data-background="true" name="p2">
+<div class="nb-cell program" data-background="true" data-singleline="true" name="p2">
 %%roster_to_minizinc
 roster_to_minizinc(LIST_OF_ROSTER_ITEMS,RESULT):-
     maplist(roster_to_minizinc,LIST_OF_ROSTER_ITEMS,RESULT).
 
 roster_to_minizinc(roster(DOC,DAY,SHIFT),MINIZINC):-
- (switch_shifts(DOC,DAY,SHIFT,MINIZINC)-&gt;true ; 
+    (switch_shifts(DOC,DAY,SHIFT,MINIZINC)  -&gt;true ; 
  										(   writeln("failed shifts"),
      										write(DOC),
      										write(DAY),write(SHIFT))).
 
 
 switch_shifts(DOC,DAY,SHIFT,RESULT):-
-    valid_shift(SHIFT),
+    valid_shifts(VALID_SHIFTS),  %% data below.....
+    memberchk(SHIFT,VALID_SHIFTS), %% only returns true/false ie not a generator
     upcase_atom(DOC,UPDOC),
     format(atom(RESULT),"constraint roster[~w,~w] = ~w;\n",[UPDOC,DAY,SHIFT]).
 
 switch_shifts(DOC,DAY,SHIFT,RESULT):-
-    string_chars(SHIFT,['x',S1]),
+    atom_chars(SHIFT,[x,S1]),
     upcase_atom(DOC,UPDOC),
     format(atom(RESULT),"constraint roster[~w,~w] != ~w;\n",[UPDOC,DAY,S1]).
 
 switch_shifts(DOC,DAY,SHIFT,RESULT):-
-    string_chars(SHIFT,[S1,S2]),
+    atom_chars(SHIFT,[S1,S2]),
     upcase_atom(DOC,UPDOC),
     format(atom(RESULT),"constraint roster[~w,~w] = ~w \\/ roster[~w,~w] = ~w;\n",[UPDOC,DAY,S1,UPDOC,DAY,S2]).
 
 
-valid_shift(a).
-valid_shift(p).
-valid_shift(l).
-valid_shift(c).
-valid_shift(s).
-valid_shift(o).
-valid_shift(i).
-valid_shift(lsl).
-valid_shift(cl).
+valid_shifts([a,p,l,c,s,o,i,lsl,cl]).
+
+</div>
+
+<div class="nb-cell program" data-background="true" data-singleline="true" name="p6">
+%%roster_to_rosteron  [[roster(gm,1,a),...],[roster(db,1,p)...],...] -&gt; rosteron_lines...
+%% usage maplist(dds_rl(dayone-34),[roster(gm,1,b),roster(gm,2,a)],R).
+
+
+dds_rl(dayone-DAYONE,roster(DOC,DAY,SHIFT),
+       [rol([DOC,S1,TODAY,DATE_STRING]),
+        rol([DOC,S2,TODAY,DATE_STRING])]):-
+    TEMPDAY is DAY mod 7,
+    get_day(TEMPDAY,TODAY),
+    (ss(DOC,TODAY,SHIFT,S1,S2) -&gt; true ; format("error ss(DOC-~w,DAY-~w,SH-~w)" ,[DOC,DAY,SHIFT])),
+    DATE_STRING is DAYONE + DAY - 1.
+
+get_day(1,mon).
+get_day(2,tue).
+get_day(3,wed).
+get_day(4,thu).
+get_day(5,fri).
+get_day(6,sat).
+get_day(0,sun).
+
+weekend(DAY):-member(DAY,[sat,sun]).
+weekday(DAY):-member(DAY,[mon,tue,wed,thu,fri]).
+alldays(DAY):-member(DAY,[mon,tue,wed,thu,fri,sat,sun]).
+ss(gm,DAY,a,a816,c1618):- weekend(DAY).
+ss(gm,DAY,a,a818,"_"):- weekday(DAY).
+ss(gm,DAY,c,c818,"_"):- member(DAY,[mon,tue,wed,thu,fri]).
+ss(gm,DAY,p,c1416,p1624):- member(DAY,[mon,tue,wed,thu,fri,sat,sun]).
+ss(db,DAY,p,p1624,c1416):-alldays(DAY).
+ss(db,DAY,a,a818,""):-alldays(DAY).
+
+
 
 </div>
 
